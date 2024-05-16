@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_KEY);
+
 //-------------------user auth
 const userSignUp = async (req, res, next) => {
   try {
@@ -154,6 +156,42 @@ const placeOrder = async (req, res, next) => {
   }
 };
 
+const makeStripePayment =async  (req,res,next)=>{
+  try {
+    
+    const userCartProduct = req.body;
+    const userJWT = req.user;
+    const user = await User.findById(userJWT.id);
+    if(user){
+      const lineItems = userCartProduct.map((product)=>{
+        return {
+            price_data: {
+                currency: "inr",
+                product_data: {
+                    name: product.product.name,
+                    images:[product.product.img]
+                },
+                unit_amount: product.product.price.org*100,
+            },
+            quantity: product.quantity
+        }
+    });
+      const session = await stripe.checkout.sessions.create({ 
+        payment_method_types: ["card"], 
+        line_items: lineItems,
+        mode: "payment", 
+        success_url: "http://localhost:3000/success", 
+        cancel_url: "http://localhost:3000/cart", 
+      }); 
+
+      res.json({ id: session.id }); 
+  }
+
+  } catch (error) {
+    return res.status(500).json("Error");
+  }
+}
+
 //-------------------addd to favpourite-=---------------
 
 const addToFav = async (req, res, next) => {
@@ -278,6 +316,8 @@ const getUserDetails = async (req, res) => {
     return res.status(500).json("Error");
   }
 };
+
+
 module.exports = {
   userSignUp,
   userSignIn,
@@ -291,4 +331,5 @@ module.exports = {
   getAllOrders,
   forgotPassword,
   getUserDetails,
+  makeStripePayment
 };

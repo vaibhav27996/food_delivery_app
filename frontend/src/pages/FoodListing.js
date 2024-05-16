@@ -117,8 +117,8 @@ const FoodListing = () => {
     <Container>
       <Filters>
         <Menu>
-          {filter.map((filters) => (
-            <FilterSection>
+          {filter.map((filters,i) => (
+            <FilterSection key={i}>
               <Title>{filters.name}</Title>
               {filters.value === "price" ? (
                 <Slider
@@ -128,8 +128,8 @@ const FoodListing = () => {
                   max={1000}
                   valueLableDisplay="auto"
                   marks={[
-                    { value: 0, label: "$0" },
-                    { value: 1000, label: "$1000" },
+                    { value: 0, label: "₹0" },
+                    { value: 1000, label: "₹1000" },
                   ]}
                   onChange={(e, newValue) => setPriceRange(newValue)}
                 />

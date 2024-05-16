@@ -11,12 +11,12 @@ import {
 import Button from "./Button";
 import { Avatar } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { logout, search } from "../redux/reducer/UserSlice";
+import { logout, search,setUserCount ,getFinalUserCartCount } from "../redux/reducer/UserSlice";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import TextInput from "../components/TextInput";
-import {getUserDetails} from '../api/index'
+import {getUserDetails ,getCart} from '../api/index'
 const Nav = styled.div`
   background-color:#046665;
   height: 80px;
@@ -88,7 +88,7 @@ const Navlink = styled(NavLink)`
     color: white;
     border-bottom: 1.8px solid #c9cae0;
     @media screen and (max-width: 768px) {
-      color: #1f1717;
+      color: black;
     }
   }
 `;
@@ -148,8 +148,15 @@ const TextButton = styled.span`
   font-size: 16px;
   transition: all 0.3s ease;
   font-weight: 600;
+  @media screen and (max-width: 768px) {
+    width: 113px;
+    color:black
+  }
   &:hover {
     color: ${props => props.theme.primary};
+    @media screen and (max-width: 768px) {
+      color: pink;
+    }
   }
 `;
 
@@ -166,7 +173,16 @@ const MobileSearchInput = styled.input`
   }
 `;
 
+const Count = styled.div`
+top: 11px;
+margin-left: 26px;
+position: absolute;
+@media screen and (max-width: 768px) {
+  position: absolute;
+  color: white;
+}
 
+`
 
 
 const Navbar = ({ setOpenAuth, openAuth, currentUser }) => {
@@ -174,6 +190,8 @@ const Navbar = ({ setOpenAuth, openAuth, currentUser }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [imageSrc, setImageSrc] = useState('');
+  const getUserCartCount = useSelector(getFinalUserCartCount);
+ 
   const logoutBtn = () => {
     dispatch(logout());
     navigate("/");
@@ -192,14 +210,24 @@ const Navbar = ({ setOpenAuth, openAuth, currentUser }) => {
   }
 
   useEffect(()=>{
+    const getCartCount=async ()=>{
+        let token = localStorage.getItem('food-app-token');
+        await getCart(token)
+          .then((res) => {
+            dispatch(setUserCount(res.data.length))
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
     getUserImg();
+    getCartCount();
   },[]);
 
   useEffect(()=>{
     {!openAuth && getUserImg()};
   },[openAuth]);
 
-  console.log('imageSrc',imageSrc);
   return (
     <Nav>
       <NavContainer>
@@ -220,9 +248,11 @@ const Navbar = ({ setOpenAuth, openAuth, currentUser }) => {
           {currentUser && (
             <>
               <Navlink to="/favorite">
-                <FavoriteBorder sx={{ color: "inherit", fontSize: "28px" }} />
+                <FavoriteBorder sx={{ color: "white", fontSize: "28px" }} />
               </Navlink>
               <Navlink to="/cart">
+              <Count>{getUserCartCount!==0 && getUserCartCount}</Count>
+
                 <ShoppingCartOutlined
                   sx={{ color: "inherit", fontSize: "28px" }}
                 />
@@ -299,9 +329,13 @@ const Navbar = ({ setOpenAuth, openAuth, currentUser }) => {
                 <FavoriteBorder sx={{ color: "inherit", fontSize: "28px" }} />
               </Navlink>
               <Navlink to="/cart">
-                <ShoppingCartOutlined
+                <div style={{display:'flex'}}>
+                  <Count>{getUserCartCount!==0 && getUserCartCount}</Count>
+                  <ShoppingCartOutlined
                   sx={{ color: "inherit", fontSize: "28px" }}
                 />
+                </div>
+                
               </Navlink>
               {imageSrc ?
               <img src={imageSrc} alt="Your Image" style={{width:'60px',height:'60px',borderRadius:'50%'}}/>

@@ -15,7 +15,7 @@ export const category = [
     off: "20-40% OFF",
   },
   {
-    img: "https://t3.ftcdn.net/jpg/01/76/33/14/360_F_176331484_nLHY9EoW0ETwPZaS9OBXPGbCJhT70GZe.jpg",
+    img: "https://t3.ftcdn.net/jpg/03/01/97/86/360_F_301978652_O0aPwap1JaEVaAhj3mIlbqNnJGmRyCzC.jpg",
     name: "Desserts",
     off: "30-40% OFF",
   },

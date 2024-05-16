@@ -2,13 +2,21 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import TextInput from "../components/TextInput";
 import Button from "../components/Button";
-import { addToCart, deleteFromCart, getCart, placeOrder } from "../api";
+import {
+  addToCart,
+  deleteFromCart,
+  getCart,
+  placeOrder,
+  stripePaymentGateway,
+} from "../api";
 import { useNavigate } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
-
+import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-
+import { setUserCount } from "../redux/reducer/UserSlice";
 import { DeleteOutline } from "@mui/icons-material";
+import { loadStripe } from "@stripe/stripe-js";
+
 const Container = styled.div`
   padding: 20px 30px;
   padding-bottom: 200px;
@@ -21,7 +29,7 @@ const Container = styled.div`
   @media (max-width: 768px) {
     padding: 20px 12px;
   }
-  background: ${props => props.theme.bg};
+  background: ${(props) => props.theme.bg};
 `;
 const Section = styled.div`
   width: 100%;
@@ -72,15 +80,13 @@ const TableItem = styled.div`
   flex: 1;
   font-weight: 600;
   font-size: 18px;
-  tex-align:center
+  tex-align: center;
 `;
 
 const Counter = styled.div`
   display: flex;
   gap: 12px;
   align-items: center;
-  border: 1px solid black;
-  border-radius: 8px;
   padding: 4px 12px;
 `;
 
@@ -111,7 +117,6 @@ const ProductDesc = styled.div`
   white-space: nowrap;
 `;
 
-
 // ---------------------right-----------------------
 
 const Right = styled.div`
@@ -138,14 +143,13 @@ const Delivery = styled.div`
   gap: 6px;
   flex-direction: column;
 `;
-const Span=styled.span`
+const Span = styled.span`
   padding-top: 10px;
-`
+`;
 
 const Cart = () => {
   const [loading, setLoading] = useState(false);
   const [userCartProduct, setUserCartProduct] = useState([]);
-
   const [reload, setReload] = useState(false);
   const [buttonLoad, setButtonLoad] = useState(false);
   const [deliveryDetails, setDeliveryDetails] = useState({
@@ -156,7 +160,7 @@ const Cart = () => {
     completeAddress: "",
   });
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   const convertAddress = (addressObj) => {
     return `${addressObj.firstName} ${addressObj.lastName}, ${addressObj.completeAddress}, ${addressObj.phoneNumber}, ${addressObj.emailAddress}`;
   };
@@ -165,8 +169,8 @@ const Cart = () => {
     setLoading(true);
     let token = localStorage.getItem("food-app-token");
     const userInfo = localStorage.getItem("userInfo");
-     if(!token && !userInfo){
-      navigate('/');
+    if (!token && !userInfo) {
+      navigate("/");
       setLoading(false);
     }
 
@@ -174,6 +178,10 @@ const Cart = () => {
       .then((res) => {
         setUserCartProduct(res.data);
         setLoading(false);
+        const getCartCount = async (data) => {
+          await dispatch(setUserCount(data.data.length));
+        };
+        getCartCount(res);
       })
       .catch((err) => {
         console.log(err);
@@ -184,7 +192,7 @@ const Cart = () => {
     getUserCartProducts();
   }, [reload]);
 
-  const addCart = async (id) => {
+  const addOty = async (id) => {
     const token = localStorage.getItem("food-app-token");
     await addToCart({ productId: id, quantity: 1 }, token)
       .then((res) => {
@@ -195,7 +203,7 @@ const Cart = () => {
       });
   };
 
-  const removeCart = async (id, quantity, type) => {
+  const removeOty = async (id, quantity, type) => {
     const token = localStorage.getItem("food-app-token");
     let qnt = quantity > 0 ? 1 : 0;
     if (type === "full") qnt = 0;
@@ -205,6 +213,16 @@ const Cart = () => {
     })
       .then((res) => {
         setReload(!reload);
+        const getCartCount = async () => {
+          let token = localStorage.getItem("food-app-token");
+          await getCart(token)
+            .then((res) => {
+              dispatch(setUserCount(res.data.length));
+            }).catch((err) => {
+              console.log(err);
+            });
+        };
+        getCartCount();
       })
       .catch((err) => {
         setReload(!reload);
@@ -218,20 +236,50 @@ const Cart = () => {
     );
   };
 
+  const checkValidation = ()=>{
+    const isValidEmail = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
+    
+    switch (true) {
+      case (userCartProduct.length === 0):
+        toast.error("Add atleast 1 item in cart!", {
+          autoClose: 1500,
+        });
+        break;
+
+      case deliveryDetails.firstName === "" || deliveryDetails.lastName === "" || deliveryDetails.emailAddress === "":
+        toast.error("first name , last name and email are required", {
+          autoClose: 1500,
+        });
+        break;
+
+      case deliveryDetails.firstName === "" :
+          toast.error("first name or last name required", {
+            autoClose: 1500,
+          });
+        break; 
+        
+      case !deliveryDetails.emailAddress.match(isValidEmail):
+          toast.error("Invalid Email", {
+            autoClose: 1500,
+          });
+        break;  
+
+      default:
+        return true;
+    }
+
+    setButtonLoad(false);
+    return false;
+  }
+
   const PlaceOrder = async () => {
     setButtonLoad(true);
     try {
-      if (userCartProduct.length === 0) {
-        toast.error("Add atleast 1 item in cart", {
-          autoClose: 1500,
-        });
-        setButtonLoad(false);
-      } else if (deliveryDetails.firstName === "" || deliveryDetails.lastName === "") {
-        toast.error("first name or last name required ", {
-          autoClose: 1500,
-        });
-        setButtonLoad(false);
-      } else {
+      if (checkValidation()) {
+        const stripe = await loadStripe(
+          "pk_test_51PGmawSGycLp6COKrQQBixXHzfMMYVpPhaFCn6QgLtuQsrNN3BAxyWT4JprST69STIylFXvdYQDAYZysnUHKbuQ100YX4IA6ll"
+        );
+
         const token = localStorage.getItem("food-app-token");
         const totalAmount = calculateSubtotal();
         const orderDetails = {
@@ -240,21 +288,32 @@ const Cart = () => {
           totalAmount,
         };
 
-        await placeOrder(token, orderDetails)
-          .then((res) => {
-            setButtonLoad(false);
-            toast.success("Place order Successfully", {
-              autoClose: 1500,
+       
+
+        await stripePaymentGateway(token, userCartProduct)
+          .then(async (res) => {
+            console.log("stripe res", res);
+            const session = res.data;
+            const result = stripe.redirectToCheckout({
+              sessionId: session.id,
             });
-            setReload(!reload);
-            navigate("/");
+            if (result.error) {
+              console.log(result.error);
+            } else {
+              await placeOrder(token, orderDetails)
+                .then((res) => {
+                  setButtonLoad(false);
+                  setReload(!reload);
+                })
+                .catch((err) => {
+                  toast.success("Place not order Successfully", {
+                    autoClose: 1500,
+                  });
+                  setButtonLoad(false);
+                });
+            }
           })
-          .catch((err) => {
-            toast.success("Place not order Successfully", {
-              autoClose: 1500,
-            });
-            setButtonLoad(false);
-          });
+          .catch((err) => {});
       }
     } catch (err) {
       toast.error("Place not order Successfully", {
@@ -284,79 +343,98 @@ const Cart = () => {
               <CircularProgress />
             ) : (
               <>
+                {userCartProduct.length === 0 ? (
+                  <Span>No cart product found</Span>
+                ) : (
+                  userCartProduct.map((cartDetails) => (
+                    <>
+                      <Table>
+                        <TableItem flex>
+                          <Product>
+                            <Img src={cartDetails?.product?.img} />
+                            <Details>
+                              <ProductTitle>
+                                {cartDetails?.product?.name}
+                              </ProductTitle>
+                              <ProductDesc>
+                                {cartDetails?.product?.desc}
+                              </ProductDesc>
+                            </Details>
+                          </Product>
+                        </TableItem>
+                        <TableItem>
+                          ₹{cartDetails?.product?.price?.org}
+                        </TableItem>
+                        <TableItem>
+                          <Counter>
+                            <div
+                              style={{
+                                cursor: "pointer",
+                                flex: 1,
+                                background: "#470303",
+                                textAlign: "center",
+                                borderRadius: "34%",
+                                height: "23px",
+                                color: "white",
+                                fontSize: "16px",
+                                pointerEvents:cartDetails && cartDetails?.quantity === 1 && "none"
+                              }}
+                              onClick={() =>
+                                removeOty(
+                                  cartDetails?.product?._id,
+                                  cartDetails?.quantity - 1
+                                )
+                              }
+                            >
+                              -
+                            </div>
+                            {cartDetails?.quantity}{" "}
+                            <div
+                              style={{
+                                cursor: "pointer",
+                                flex: 1,
+                                background: "#470303",
 
-                {userCartProduct.length ===0 ? <Span>No cart product found</Span>: userCartProduct.map((cartDetails) => (
-                  <>
-                    <Table>
-                      <TableItem flex>
-                        <Product>
-                          <Img src={cartDetails?.product?.img} />
-                          <Details>
-                            <ProductTitle>
-                              {cartDetails?.product?.name}
-                            </ProductTitle>
-                            <ProductDesc>
-                              {cartDetails?.product?.desc}
-                            </ProductDesc>
-                          </Details>
-                        </Product>
-                      </TableItem>
-                      <TableItem>${cartDetails?.product?.price?.org}</TableItem>
-                      <TableItem>
-                        <Counter>
-                          <div
-                            style={{
-                              cursor: "pointer",
-                              flex: 1,
-                            }}
+                                textAlign: "center",
+                                borderRadius: "34%",
+                                height: "23px",
+                                color: "white",
+                                fontSize: "16px",
+                              }}
+                              onClick={() => addOty(cartDetails?.product?._id)}
+                            >
+                              +
+                            </div>
+                          </Counter>
+                        </TableItem>
+                        <TableItem>
+                          {" "}
+                          ₹
+                          {cartDetails.quantity *
+                            cartDetails?.product?.price?.org}
+                        </TableItem>
+                        <TableItem>
+                          <DeleteOutline
+                            sx={{ color: "red", cursor: "pointer" }}
                             onClick={() =>
-                              removeCart(
+                              removeOty(
                                 cartDetails?.product?._id,
-                                cartDetails?.quantity - 1
+                                cartDetails?.quantity - 1,
+                                "full"
                               )
                             }
-                          >
-                            -
-                          </div>
-                          {cartDetails?.quantity}{" "}
-                          <div
-                            style={{
-                              cursor: "pointer",
-                              flex: 1,
-                            }}
-                            onClick={() => addCart(cartDetails?.product?._id)}
-                          >
-                            +
-                          </div>
-                        </Counter>
-                      </TableItem>
-                      <TableItem>
-                        {" "}
-                        $
-                        {cartDetails.quantity *
-                          cartDetails?.product?.price?.org}
-                      </TableItem>
-                      <TableItem>
-                        <DeleteOutline
-                          sx={{ color: "red" }}
-                          onClick={() =>
-                            removeCart(
-                              cartDetails?.product?._id,
-                              cartDetails?.quantity - 1,
-                              "full"
-                            )
-                          }
-                        />
-                      </TableItem>
-                    </Table>
-                  </>
-                ))}
+                          />
+                        </TableItem>
+                      </Table>
+                    </>
+                  ))
+                )}
               </>
             )}
           </Left>
           {/* Right -------------------- */}
           <Right>
-            <SubTotal>Subtotal : ${calculateSubtotal()}</SubTotal>
+            <SubTotal>Subtotal : ₹{calculateSubtotal()}</SubTotal>
             <Delivery>
               Delivery Details:
               <div>
@@ -367,9 +445,10 @@ const Cart = () => {
                   }}
                 >
                   <TextInput
-                    small
+                    
                     placeholder="First Name"
                     value={deliveryDetails.firstName}
+                     
                     handelChange={(e) =>
                       setDeliveryDetails({
                         ...deliveryDetails,
@@ -378,9 +457,10 @@ const Cart = () => {
                     }
                   />
                   <TextInput
-                    small
+                    
                     placeholder="Last Name"
                     value={deliveryDetails.lastName}
+                     
                     handelChange={(e) =>
                       setDeliveryDetails({
                         ...deliveryDetails,
@@ -390,9 +470,10 @@ const Cart = () => {
                   />
                 </div>
                 <TextInput
-                  small
+                  
                   placeholder="Email Address"
                   value={deliveryDetails.emailAddress}
+                   
                   handelChange={(e) =>
                     setDeliveryDetails({
                       ...deliveryDetails,
@@ -401,9 +482,10 @@ const Cart = () => {
                   }
                 />
                 <TextInput
-                  small
+                  
                   placeholder="Enter mobile no"
                   value={deliveryDetails.phoneNumber}
+                   
                   handelChange={(e) =>
                     setDeliveryDetails({
                       ...deliveryDetails,
@@ -417,6 +499,7 @@ const Cart = () => {
                   rows="5"
                   placeholder="Enter address"
                   value={deliveryDetails.completeAddress}
+                   
                   handelChange={(e) =>
                     setDeliveryDetails({
                       ...deliveryDetails,

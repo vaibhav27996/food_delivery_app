@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const API = axios.create({
+//   baseURL: "https://food-delivery-backend-ld49.onrender.com/",
   baseURL: "http://localhost:8000/",
+
 });
 
 export const UserSignUp = async (formData) => await API.post("/user/signup", formData,{
@@ -51,6 +53,10 @@ export const placeOrder = async (token,data)=>await API.post('/user/order/',data
     headers:{Authorization:`Bearer ${token}`}
 })
 
+export const stripePaymentGateway = async (token,data) => await API.post('/user/stripePayment', data,{
+    headers:{Authorization:`Bearer ${token}`}
+});
+
 
 export const getAllOrderList = async (token,filter)=>await API.get(`/user/getAllOrders?${filter}`,{
     headers:{Authorization:`Bearer ${token}`}
@@ -60,3 +66,5 @@ export const getAllOrderList = async (token,filter)=>await API.get(`/user/getAll
 export const getUserDetails = async (token)=>await API.get('/user/getImage',{
     headers:{Authorization:`Bearer ${token}`}
 })
+
+

@@ -7,8 +7,10 @@ import ProductCard from "../components/cards/ProductCard";
 import { getAllProducts } from "../api/index";
 import { CircularProgress } from "@mui/material";
 import { useSelector } from "react-redux";
-import {searchQueryInput} from '../redux/reducer/UserSlice';
-
+import { searchQueryInput } from "../redux/reducer/UserSlice";
+import { useParams } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { toast } from "react-toastify";
 const Container = styled.div`
   padding: 20px 30px;
   padding-bottom: 200px;
@@ -21,7 +23,7 @@ const Container = styled.div`
   @media (max-width: 768px) {
     padding: 20px 12px;
   }
-  background:#e8dede
+  background: #e8dede;
 `;
 const Section = styled.div`
   gap: 28;
@@ -39,7 +41,7 @@ const CardWrapper = styled.div`
   flex-wrap: wrap;
   gap: 32px;
   justify-content: center;
-  margin-top:10px;
+  margin-top: 10px;
   @media (max-width: 760px) {
     gap: 16px;
   }
@@ -52,15 +54,11 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const searchInput = useSelector(searchQueryInput);
-  console.log('searchInput',searchInput);
+  const {message} = useParams();
+  const navigate =useNavigate();
+  
   const getProducts = async () => {
-   
-    
-    await getAllProducts(
-      searchInput.length > 0
-      ? `search=${searchInput}`
-      : ``
-    )
+    await getAllProducts(searchInput.length > 0 ? `search=${searchInput}` : ``)
       .then((res) => {
         setProducts(res.data);
         setLoading(false);
@@ -71,10 +69,9 @@ const Home = () => {
   };
 
   useEffect(() => {
-    console.log('call after logout');
     getProducts();
   }, []);
-  
+
   useEffect(() => {
     getProducts();
   }, [searchInput]);
@@ -93,7 +90,7 @@ const Home = () => {
           ))}
         </CardWrapper>
       </Section>
-          <br />
+      <br />
       <Section>
         <Title>Most Popular</Title>
         {loading ? (

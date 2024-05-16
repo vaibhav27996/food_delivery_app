@@ -12,7 +12,7 @@ const {
   removeFromFav,
   removeFromCart,
   placeOrder
-  ,getAllOrders,forgotPassword,getUserDetails
+  ,getAllOrders,forgotPassword,getUserDetails,makeStripePayment
 } = require("../controllers/userController.js");
 
 const auth = require("../authenticate.js");
@@ -37,7 +37,9 @@ router.get("/getImage",auth,getUserDetails)
 
 //order place
 router.post("/order", auth, placeOrder);
-router.get("/getAllOrders",auth,getAllOrders)
+router.get("/getAllOrders",auth,getAllOrders);
+router.post("/stripePayment",auth,makeStripePayment);
+
 
 //cart
 router.post("/cart", auth, addToCard);

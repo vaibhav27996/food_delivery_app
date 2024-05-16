@@ -14,9 +14,11 @@ import {
   addToCart,
   getFavourite,
   removeFromFavourite,
+  getCart
 } from "../../api/index";
 import { toast } from "react-toastify";
-
+import { setUserCount } from "../../redux/reducer/UserSlice";
+import { useDispatch } from "react-redux";
 const Card = styled.div`
   width: 300px;
   display: flex;
@@ -134,6 +136,7 @@ const Span = styled.div`
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const [favorite, setFavorite] = useState(false);
+  const dispatch = useDispatch();
 
   const getCurrUser = localStorage.getItem("food-app-token");
   const addToFavourite = async (productId) => {
@@ -155,12 +158,14 @@ const ProductCard = ({ product }) => {
     try {
       const token = localStorage.getItem("food-app-token");
       await addToCart({ productId, quantity: 1 }, token)
-        .then((res) => {
-          console.log("ress", res);
+        .then(async (res) => {
           toast.success(res.data.message, {
             autoClose: 1500,
           });
-          navigate("/cart");
+
+          let getCartData=  await getCart(token);
+          dispatch(setUserCount(getCartData.data.length));
+      
         })
         .catch((err) => {});
     } catch (error) {}
@@ -173,7 +178,6 @@ const ProductCard = ({ product }) => {
         const isFavorite = res.data?.some(
           (favorite) => favorite._id === product?._id
         );
-
         setFavorite(isFavorite);
       })
       .catch((err) => {});
@@ -184,13 +188,16 @@ const ProductCard = ({ product }) => {
     console.log(productId);
     await removeFromFavourite(token, { productId })
       .then((res) => {
+        toast.success(res.data.message, {
+          autoClose: 1500,
+        });
         setFavorite(false);
       })
       .catch((err) => {});
   };
 
   useEffect(() => {
-    console.log('call')
+  
     checkFavorite();
   }, [favorite]);
 
@@ -233,9 +240,9 @@ const ProductCard = ({ product }) => {
         <Desc>{product?.desc}</Desc>
         <Price>
           {" "}
-          ${product?.price?.org}
-          <Span>${product?.price?.mrp}</Span>
-          <Percent>(${product?.price?.off} off)</Percent>
+          ₹{product?.price?.org}
+          <Span>₹{product?.price?.mrp}</Span>
+          <Percent>(₹{product?.price?.off} off)</Percent>
         </Price>
       </Details>
     </Card>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { CircularProgress } from "@mui/material";
 import { getAllOrderList } from "../api/index";
-import {searchQueryInput} from '../redux/reducer/UserSlice';
+import { searchQueryInput } from "../redux/reducer/UserSlice";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 const Container = styled.div`
@@ -113,6 +113,12 @@ const TotalDiv = styled.div`
   padding-left: 10px;
   color: white;
   display: flex;
+  padding-right: 18rem;
+  text-align: right;
+  @media (max-width: 768px) {
+    padding-right: 0rem;
+    text-align: left;
+  }
 `;
 const TotalAmount = styled.div`
   flex: 1;
@@ -131,15 +137,14 @@ const OrderList = () => {
     setLoading(true);
     const token = localStorage.getItem("food-app-token");
     const userInfo = localStorage.getItem("userInfo");
-     if(!token && !userInfo){
-      navigate('/');
+    if (!token && !userInfo) {
+      navigate("/");
       setLoading(false);
     }
 
-    let searchInputData= searchInput.length > 0 ? `search=${searchInput}` : ``
-    await getAllOrderList(token,searchInputData)
+    let searchInputData = searchInput.length > 0 ? `search=${searchInput}` : ``;
+    await getAllOrderList(token, searchInputData)
       .then((res) => {
-        console.log(res.data);
         setOrders(res.data);
         setLoading(false);
       })
@@ -164,52 +169,59 @@ const OrderList = () => {
   return (
     <Container>
       <Section>
-        <Title>Your Order Lists</Title>
-        <Wrapper>
-          <Left>
-            <Table>
-              <TableItem bold flex>
-                Products
-              </TableItem>
-              <TableItem bold>Price</TableItem>
-              <TableItem bold>Quantity</TableItem>
-              <TableItem bold>Subtotal</TableItem>
-            </Table>
+        <Title>
+          {orders.length > 0 ? "Your Order Lists" : "No Order Lists Found"}
+        </Title>
 
-            {loading ? (
-              <>
-                <CircularProgress />
-              </>
-            ) : (
-              <>
-                {orders.map((order) => (
-                  <>
-                    <Table>
-                      <TableItem flex>
-                        <Product>
-                          <Img src={order?.product?.img} />
-                          <Details>
-                            <ProductTitle>{order?.product?.name}</ProductTitle>
-                            <ProductDesc>{order?.product?.desc}</ProductDesc>
-                          </Details>
-                        </Product>
-                      </TableItem>
-                      <TableItem>${order?.product?.price?.org}</TableItem>
-                      <TableItem>{order?.quantity} </TableItem>
-                      <TableItem>
-                        {" "}
-                        ${order.quantity * order?.product?.price?.org}
-                      </TableItem>
-                    </Table>
-                  </>
-                ))}
-                <TotalDiv>
-                  <div>Total: ${calcuateTotalAmount()}</div>
-                </TotalDiv>
-              </>
-            )}
-          </Left>
-        </Wrapper>
+        {orders.length > 0 && (
+          <Wrapper>
+            <Left>
+              <Table>
+                <TableItem bold flex>
+                  Products
+                </TableItem>
+                <TableItem bold>Price</TableItem>
+                <TableItem bold>Quantity</TableItem>
+                <TableItem bold>Subtotal</TableItem>
+              </Table>
+
+              {loading ? (
+                <>
+                  <CircularProgress />
+                </>
+              ) : (
+                <>
+                  {orders.map((order, i) => (
+                    <>
+                      <Table key={i}>
+                        <TableItem flex>
+                          <Product>
+                            <Img src={order?.product?.img} />
+                            <Details>
+                              <ProductTitle>
+                                {order?.product?.name}
+                              </ProductTitle>
+                              <ProductDesc>{order?.product?.desc}</ProductDesc>
+                            </Details>
+                          </Product>
+                        </TableItem>
+                        <TableItem>₹{order?.product?.price?.org}</TableItem>
+                        <TableItem>{order?.quantity} </TableItem>
+                        <TableItem>
+                          {" "}
+                          ₹{order.quantity * order?.product?.price?.org}
+                        </TableItem>
+                      </Table>
+                    </>
+                  ))}
+                  <TotalDiv>
+                    <div>Total: ₹ {calcuateTotalAmount()}</div>
+                  </TotalDiv>
+                </>
+              )}
+            </Left>
+          </Wrapper>
+        )}
       </Section>
     </Container>
   );

@@ -15,7 +15,7 @@ import { useSelector } from "react-redux";
 // import { useSelector } from "react-redux";
 import {currUser ,refresh} from './redux/reducer/UserSlice';
 import { useDispatch } from "react-redux";
-
+import Success from './pages/Success';
 const Container = styled.div``;
 
 function App() {
@@ -38,6 +38,8 @@ function App() {
             <Route path="/dishes/:id" exact element={<FoodDetails />} />
             <Route path="/dishes" exact element={<FoodListing />} />
             <Route path="/orders" exact element={<OrderList />} />
+            <Route path="/success" exact element={<Success />} />
+
           </Routes>
           {openAuth && <Authentication setOpenAuth={setOpenAuth} openAuth={openAuth}/>}
         </Container>

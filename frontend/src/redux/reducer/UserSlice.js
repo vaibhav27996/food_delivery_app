@@ -1,8 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
-
+import {getCart} from '../../api/index';
 const initialState= {
     currentUser:null,
-    searchQuery:""
+    searchQuery:"",
+    userCartCount:0
 }
 
 export const userSlice= createSlice({
@@ -33,12 +34,15 @@ export const userSlice= createSlice({
         search:(state,action)=>{
            
             state.searchQuery = action.payload;
+        },
+        setUserCount:(state,action)=>{
+            state.userCartCount =action.payload;
         }
     }
 });
 
-export const {updateUser,loginSuccess,logout,refresh ,search} = userSlice.actions;
+export const {updateUser,loginSuccess,logout,refresh ,search,setUserCount} = userSlice.actions;
 export const currUser = (state)=>state.user.currentUser;
 export const searchQueryInput = (state)=>state.user.searchQuery;
-
+export const getFinalUserCartCount = (state)=>state.user.userCartCount;
 export default userSlice.reducer;

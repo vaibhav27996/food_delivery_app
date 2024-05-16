@@ -16,23 +16,23 @@ const Container = styled.div`
 const Title = styled.div`
   font-size: 30px;
   font-weight: 800;
-  color: ${ props => props.theme.primary};
+  color: ${(props) => props.theme.primary};
 `;
 const Span = styled.div`
   font-size: 16px;
   font-weight: 400;
-  color: ${props => props.theme.text_secondary + 90};
+  color: ${(props) => props.theme.text_secondary + 90};
 `;
 const TextButton = styled.div`
   width: 100%;
   text-align: end;
-  color: ${props => props.theme.text_primary};
+  color: ${(props) => props.theme.text_primary};
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s ease;
   font-weight: 500;
   &:hover {
-    color: ${props => props.theme.primary};
+    color: ${(props) => props.theme.primary};
   }
 `;
 
@@ -46,10 +46,9 @@ const SignUp = ({ setOpenAuth }) => {
   const [name, setName] = useState("");
   const [img, setImg] = useState();
 
-
   const validateInput = () => {
-      switch (true) {
-      case (!email || !password || !name):
+    switch (true) {
+      case !email || !password || !name:
         toast.error("All fields are required !", {
           autoClose: 1500,
         });
@@ -69,43 +68,56 @@ const SignUp = ({ setOpenAuth }) => {
     setLoading(false);
     return false;
   };
-  const handleSignUp = async () => {
-    setLoading(true);
-    setbuttonDisabled(true);
 
-    if (validateInput()) {
-
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password', password);
-      formData.append('name', name);
-
-      formData.append('img', img);
-
-      await UserSignUp(formData)
-        .then((res) => {
-          dispatch(loginSuccess(res.data));
-          toast.success("Login Successfully !", {
-            autoClose: 1500,
-          });
-          setLoading(false);
-          setbuttonDisabled(false);
-          setOpenAuth(false);
-        })
-        .catch((err) => {
-          setLoading(false);
-          setbuttonDisabled(false);
-          toast.error("Invalid Inputs !", {
-            autoClose: 1500,
-          });
+  const validateEmail = () => {
+    const isValidEmail = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
+    switch (true) {
+      case !email.match(isValidEmail):
+        toast.error("Invalid Email", {
+          autoClose: 1500,
         });
+        break;
+
+      default:
+        return true;
+    }
+    setbuttonDisabled(false);
+    setLoading(false);
+    return false;
+  };
+  const handleSignUp = async () => {
+    try {
+      setLoading(true);
+      setbuttonDisabled(true);
+      if (validateInput() && validateEmail()) {
+        const formData = new FormData();
+        formData.append("email", email);
+        formData.append("password", password);
+        formData.append("name", name);
+        formData.append("img", img);
+
+        let res = await UserSignUp(formData);
+        dispatch(loginSuccess(res.data));
+        toast.success("Sign up Successfully !", {
+          autoClose: 1500,
+        });
+        setLoading(false);
+        setbuttonDisabled(false);
+        setOpenAuth(false);
+      }
+    } catch (error) {
+      setLoading(false);
+      setbuttonDisabled(false);
+      toast.error("Invalid Inputs !", {
+        autoClose: 1500,
+      });
     }
   };
 
   return (
     <Container>
       <div>
-        <Title>Welcome to Indian Reataurent</Title>
+        <Title>Indian Restaurant</Title>
         <Span>Please sign up with your details</Span>
       </div>
 

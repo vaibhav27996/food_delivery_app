@@ -125,67 +125,65 @@ const SignIn = ({ setOpenAuth }) => {
   const handleSignIn = async () => {
     setLoading(true);
     setButtonDisabled(true);
-
-    if (validateInput() && validateEmail(email)) {
-      await UserSignIn({ email, password })
-        .then((res) => {
-          console.log("res", res);
-          dispatch(loginSuccess(res.data));
-          toast.success("Login Successfully !", {
-            autoClose: 1500,
-          });
-          setLoading(false);
-          setButtonDisabled(false);
-          setOpenAuth(false);
-        })
-        .catch((err) => {
-          setLoading(false);
-          setButtonDisabled(false);
-          toast.error("User not found!", {
-            autoClose: 1500,
-          });
+    try {
+      if (validateInput() && validateEmail(email)) {
+        const res = await UserSignIn({ email, password });
+        dispatch(loginSuccess(res.data));
+        toast.success("Login Successfully !", {
+          autoClose: 1500,
         });
+        setLoading(false);
+        setButtonDisabled(false);
+        setOpenAuth(false);
+      }
+      
+    }catch (err) {
+      setLoading(false);
+      setButtonDisabled(false);
+      toast.error("User not found!", {
+        autoClose: 1500,
+      });
     }
   };
 
   const handleForgotPass = async () => {
-    setLoading(true);
-    setButtonDisabled(true);
-    
-    if (forgotPassword && validatePasswordInput() && validateEmail(userEmail)) {
-      await userForgotPassword({ newPassword, confirmNewPassword, userEmail })
-        .then((res) => {
-     
-          if(res.data==="User Not Found"){
-            toast.error(res.data, {
-              autoClose: 1500,
-            });
-          }else{
-            toast.success(res.data, {
-              autoClose: 1500,
-            });
-          }
-         
-          setLoading(false);
-          setButtonDisabled(false);
-          setOpenAuth(true);
-          setForgotPassword(false);
-        })
-        .catch((err) => {
-          setLoading(false);
-          setButtonDisabled(false);
-          setForgotPassword(false);
-          toast.error("Invalid Inputs!", {
+
+    try {
+      setLoading(true);
+      setButtonDisabled(true);
+      
+      if (forgotPassword && validatePasswordInput() && validateEmail(userEmail)) {
+        let res = await userForgotPassword({ newPassword, confirmNewPassword, userEmail })
+        if(res.data==="User Not Found"){
+          toast.error(res.data, {
             autoClose: 1500,
           });
-        });
+        }else{
+          toast.success(res.data, {
+            autoClose: 1500,
+          });
+        }
+       
+        setLoading(false);
+        setButtonDisabled(false);
+        setOpenAuth(true);
+        setForgotPassword(false);
+      }
+    } catch (error) {
+      setLoading(false);
+      setButtonDisabled(false);
+      setForgotPassword(false);
+      toast.error("Invalid Inputs!", {
+        autoClose: 1500,
+      });
     }
+   
   };
 
   return (
     <Container>
       <div>
-        <Title>Welcome to Indian Restaurent</Title>
+        <Title>Indian Restaurant</Title>
         {forgotPassword ? (
           <span> Please enter new password</span>
         ) : (
