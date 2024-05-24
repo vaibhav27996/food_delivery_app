@@ -5,6 +5,8 @@ const app = express();
 const UserRoutes =  require('./routes/Users');
 const FoodRoutes =  require('./routes/Foods');
 const path = require('path');
+const {errorHandlerMiddleware} =require('./error');
+
 require('dotenv').config();
 db; 
 app.use(cors());
@@ -31,6 +33,7 @@ app.get("/",async(req,res)=>{
 
 app.use('/user',UserRoutes);
 app.use('/food',FoodRoutes);
+app.use(errorHandlerMiddleware);
 
 
 app.listen(process.env.PORT,()=>{

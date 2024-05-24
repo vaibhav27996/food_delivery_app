@@ -10,5 +10,7 @@ const createError = (res,status, message) => {
     });
 
 };
-
-module.exports=createError;
+const errorHandlerMiddleware = (err, req, res, next) => {
+    res.status(err.status || 500).json({ error: err.message })
+}
+module.exports = { createError, errorHandlerMiddleware };
